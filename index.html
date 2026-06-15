@@ -59,9 +59,10 @@
 
     main {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 330px;
+      grid-template-columns: minmax(980px, 1fr) 330px;
       gap: 16px;
       padding: 16px;
+      align-items: start;
     }
 
     .stage,
@@ -75,14 +76,15 @@
 
     .stage {
       position: relative;
-      min-height: 700px;
+      height: clamp(620px, calc(100vh - 170px), 760px);
+      min-height: 620px;
     }
 
     canvas {
       display: block;
       width: 100%;
       height: 100%;
-      min-height: 700px;
+      min-height: 0;
       background: linear-gradient(var(--sky) 0 36%, #e6f7ff 36% 38%, var(--soil) 38% 50%, var(--aquifer) 50% 100%);
     }
 
@@ -218,15 +220,31 @@
       line-height: 1.7;
     }
 
-    @media (max-width: 980px) {
+    @media (max-width: 1360px) {
       main {
         grid-template-columns: 1fr;
       }
 
       .stage,
-      canvas,
+      canvas {
+        height: clamp(620px, 58vw, 760px);
+        min-height: 620px;
+      }
+
       .side {
-        min-height: 640px;
+        min-height: auto;
+      }
+    }
+
+    @media (min-width: 981px) and (max-width: 1360px) {
+      .side {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) 1fr;
+      }
+
+      .controls {
+        border-right: 1px solid var(--line);
+        border-bottom: 0;
       }
     }
 
@@ -244,6 +262,12 @@
       .caption div {
         min-height: 86px;
         font-size: 13px;
+      }
+
+      .stage,
+      canvas {
+        height: 620px;
+        min-height: 620px;
       }
     }
   </style>
