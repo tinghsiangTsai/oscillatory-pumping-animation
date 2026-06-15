@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>振盪抽水示意動畫</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #607086;
+      --line: #d7dee9;
+      --sky: #dff1ff;
+      --soil: #d7b879;
+      --aquifer: #f2dfad;
+      --water: #1f7fbf;
+      --blue: #2563eb;
+      --green: #0f8a65;
+      --orange: #d15b18;
+      --purple: #6d45c7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef3f8;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      padding: 18px 24px 14px;
+      background: white;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 36px);
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      max-width: 980px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .stage,
+    .side {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(23, 32, 51, 0.08);
+      overflow: hidden;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 700px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 700px;
+      background: linear-gradient(var(--sky) 0 36%, #e6f7ff 36% 38%, var(--soil) 38% 50%, var(--aquifer) 50% 100%);
+    }
+
+    .caption {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .caption div {
+      min-height: 74px;
+      padding: 10px 12px;
+      border: 1px solid rgba(215, 222, 233, 0.9);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .caption b {
+      display: block;
+      margin-bottom: 4px;
+      color: #243044;
+    }
+
+    .side {
+      min-height: 700px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .controls {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid #b8c3d2;
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: #145a78;
+      background: #145a78;
+      color: white;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    output {
+      color: var(--muted);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #145a78;
+    }
+
+    .explain {
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .explain h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      margin: 12px 0;
+      color: #334155;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: #e8f1fb;
+      color: #145a78;
+      font-weight: 800;
+    }
+
+    .formula {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #273449;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .stage,
+      canvas,
+      .side {
+        min-height: 640px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      header,
+      main {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .caption {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .caption div {
+        min-height: 86px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>振盪抽水是什麼？</h1>
+      <p class="subtitle">把抽水井想成一個會「重複抽水、再注水」的幫浦。這個週期性擾動會在含水層中形成水頭波，波傳到觀測井時會變小，且波峰會晚一點到。</p>
+    </header>
+
+    <main>
+      <section class="stage" aria-label="振盪抽水示意動畫">
+        <canvas id="scene" width="1280" height="760"></canvas>
+        <div class="caption">
+          <div><b>1. 週期性操作</b>抽水機不是一直同方向抽，而是抽水與注水來回切換。</div>
+          <div><b>2. 形成水頭波</b>井附近水位被週期性拉低與推高，變成往外傳的波。</div>
+          <div><b>3. 波向外傳遞</b>含水層會消耗與延遲訊號，距離越遠波越小。</div>
+          <div><b>4. 觀測井量測</b>比較振幅大小與波峰時間，就能推估含水層性質。</div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <div class="controls">
+          <div class="buttons">
+            <button id="toggle" class="primary" type="button">暫停</button>
+            <button id="restart" type="button">重播</button>
+          </div>
+
+          <label>
+            <span class="row">
+              <span>抽水/注水速度</span>
+              <output id="speedOut">1.00 倍</output>
+            </span>
+            <input id="speed" type="range" min="0.45" max="1.8" step="0.05" value="1">
+          </label>
+
+          <label>
+            <span class="row">
+              <span>含水層傳波能力</span>
+              <output id="diffOut">1.00 倍</output>
+            </span>
+            <input id="diff" type="range" min="0.45" max="1.8" step="0.05" value="1">
+          </label>
+
+          <label>
+            <span class="row">
+              <span>抽水振幅</span>
+              <output id="ampOut">1.00 倍</output>
+            </span>
+            <input id="amp" type="range" min="0.55" max="1.65" step="0.05" value="1">
+          </label>
+        </div>
+
+        <div class="explain">
+          <h2>用一句話理解</h2>
+          <div class="step"><span class="num">1</span><span>抽水井給含水層一個固定節奏的擾動。</span></div>
+          <div class="step"><span class="num">2</span><span>擾動會像水波一樣往外傳，但不是地表水浪，而是地下水頭變化。</span></div>
+          <div class="step"><span class="num">3</span><span>觀測井看到的波會比較小，這叫振幅衰減。</span></div>
+          <div class="step"><span class="num">4</span><span>觀測井的波峰比較晚出現，這叫相位差或相位延遲。</span></div>
+          <div class="formula">
+            抽水井：Q(t) = Q0 + A sin(omega t)<br>
+            觀測井：水位也跟著振盪<br>
+            重點量測：振幅變小多少、波峰晚到多少
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const toggle = document.getElementById("toggle");
+    const restart = document.getElementById("restart");
+    const speed = document.getElementById("speed");
+    const diff = document.getElementById("diff");
+    const amp = document.getElementById("amp");
+    const speedOut = document.getElementById("speedOut");
+    const diffOut = document.getElementById("diffOut");
+    const ampOut = document.getElementById("ampOut");
+
+    let running = true;
+    let start = performance.now();
+    let pausedAt = 0;
+    const traces = [];
+
+    const colors = {
+      ink: "#172033",
+      muted: "#607086",
+      water: "#1f7fbf",
+      blue: "#2563eb",
+      green: "#0f8a65",
+      orange: "#d15b18",
+      purple: "#6d45c7"
+    };
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function updateLabels() {
+      speedOut.value = Number(speed.value).toFixed(2) + " 倍";
+      diffOut.value = Number(diff.value).toFixed(2) + " 倍";
+      ampOut.value = Number(amp.value).toFixed(2) + " 倍";
+    }
+
+    function waveAt(r, t) {
+      const s = Number(speed.value);
+      const d = Number(diff.value);
+      const a = Number(amp.value);
+      const omega = 1.55 * s;
+      const decay = Math.exp(-1.9 * r / Math.sqrt(d));
+      const phaseLag = 3.6 * r * Math.sqrt(s / d);
+      return a * decay * Math.sin(omega * t - phaseLag);
+    }
+
+    function pumpSignal(t) {
+      return Number(amp.value) * Math.sin(1.55 * Number(speed.value) * t);
+    }
+
+    function text(str, x, y, size = 14, color = colors.ink, align = "left", weight = 700) {
+      ctx.fillStyle = color;
+      ctx.font = `${weight} ${size}px "Microsoft JhengHei", "Noto Sans TC", Arial`;
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      ctx.fillText(str, x, y);
+    }
+
+    function line(x1, y1, x2, y2) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function arrow(x1, y1, x2, y2, color, width = 4) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+      line(x1, y1, x2, y2);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 13 * Math.cos(angle - 0.48), y2 - 13 * Math.sin(angle - 0.48));
+      ctx.lineTo(x2 - 13 * Math.cos(angle + 0.48), y2 - 13 * Math.sin(angle + 0.48));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawPump(x, groundY, t) {
+      const q = pumpSignal(t);
+      const mode = q >= 0 ? "抽水" : "注水";
+      const color = q >= 0 ? colors.orange : colors.blue;
+
+      ctx.save();
+      ctx.fillStyle = "#283548";
+      roundRect(x - 60, groundY - 108, 120, 54, 8);
+      ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      roundRect(x - 44, groundY - 96, 88, 30, 6);
+      ctx.fill();
+      text("抽水機", x, groundY - 81, 16, "#283548", "center", 800);
+
+      ctx.strokeStyle = "#283548";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      line(x, groundY - 54, x, groundY + 20);
+      line(x + 58, groundY - 82, x + 96, groundY - 82);
+
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.22 + Math.abs(q) * 0.15;
+      ctx.beginPath();
+      ctx.arc(x, groundY - 82, 34 + Math.abs(q) * 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      if (q >= 0) {
+        arrow(x - 86, groundY + 78, x - 86, groundY - 34, color, 5);
+      } else {
+        arrow(x - 86, groundY - 34, x - 86, groundY + 78, color, 5);
+      }
+
+      text(mode, x - 116, groundY + 20, 21, color, "center", 900);
+      text(q >= 0 ? "地下水被拉向井內" : "水被推回含水層", x - 116, groundY + 48, 13, color, "center", 700);
+      ctx.restore();
+    }
+
+    function drawWell(x, top, bottom, label, value, color, isPumping = false) {
+      ctx.save();
+      const waterY = top + 120 - value * 52;
+      ctx.fillStyle = "#f8fafc";
+      ctx.strokeStyle = "#2d3748";
+      ctx.lineWidth = 4;
+      roundRect(x - 15, top - 20, 30, bottom - top + 22, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = "#6b7280";
+      ctx.lineWidth = 2;
+      for (let y = top + 34; y < bottom - 16; y += 18) {
+        line(x - 12, y, x + 12, y);
+      }
+
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.9;
+      ctx.fillRect(x - 10, waterY, 20, bottom - waterY);
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      line(x - 24, waterY, x + 24, waterY);
+
+      text(label, x, top - 42, 15, color, "center", 900);
+      if (isPumping) text("擾動來源", x, bottom + 24, 13, "#6b7280", "center", 700);
+      ctx.restore();
+    }
+
+    function drawAquiferScene(t, w, h) {
+      const left = 54;
+      const right = w - 388;
+      const groundY = h * 0.36;
+      const aquiferTop = h * 0.5;
+      const bottom = h - 104;
+      const width = right - left;
+      const pumpX = left + width * 0.12;
+      const obs1 = left + width * 0.54;
+      const obs2 = left + width * 0.78;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.fillRect(0, 0, w, groundY);
+      ctx.fillStyle = "#79b86d";
+      ctx.fillRect(0, groundY - 8, w, 16);
+      ctx.fillStyle = "#caa05d";
+      ctx.fillRect(0, groundY + 8, w, aquiferTop - groundY - 8);
+      ctx.fillStyle = "#f2dfad";
+      ctx.fillRect(0, aquiferTop, w, h - aquiferTop);
+
+      ctx.strokeStyle = "rgba(106, 80, 43, 0.25)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 140; i += 1) {
+        const x = left + (i * 53) % (w - left);
+        const y = aquiferTop + 15 + (i * 29) % (bottom - aquiferTop - 30);
+        ctx.beginPath();
+        ctx.arc(x, y, 1.4 + (i % 4) * 0.35, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      text("地表", 24, groundY - 25, 15, "#4b6f38", "left", 800);
+      text("未飽和層", 24, (groundY + aquiferTop) / 2, 15, "#7a5a2a", "left", 800);
+      text("含水層", 24, aquiferTop + 22, 16, "#684f28", "left", 900);
+      text("(水頭波在這裡傳遞)", 24, aquiferTop + 46, 15, "#684f28", "left", 800);
+
+      const baseY = aquiferTop + 96;
+      ctx.strokeStyle = "rgba(31, 127, 191, 0.28)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      for (let i = 0; i <= 260; i += 1) {
+        const r = i / 260;
+        const x = pumpX + r * (right - pumpX);
+        const y = baseY - waveAt(r, t) * 42;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = colors.water;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 260; i += 1) {
+        const r = i / 260;
+        const x = pumpX + r * (right - pumpX);
+        const y = baseY - waveAt(r, t) * 42;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      for (let i = 0; i < 6; i += 1) {
+        const cycle = (t * Number(speed.value) * 0.18 + i / 6) % 1;
+        const x = pumpX + cycle * (right - pumpX);
+        const alpha = 1 - cycle;
+        ctx.strokeStyle = `rgba(109, 69, 199, ${0.35 * alpha})`;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.ellipse(x, baseY, 25 + 18 * cycle, 70 + 30 * cycle, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const q = pumpSignal(t);
+      drawPump(pumpX, groundY, t);
+      drawWell(pumpX, groundY + 18, bottom, "抽水井", q, q >= 0 ? colors.orange : colors.blue, true);
+
+      const r1 = (obs1 - pumpX) / (right - pumpX);
+      const r2 = (obs2 - pumpX) / (right - pumpX);
+      drawWell(obs1, groundY + 28, bottom, "觀測井 A", waveAt(r1, t), colors.green);
+      drawWell(obs2, groundY + 28, bottom, "觀測井 B", waveAt(r2, t), colors.purple);
+
+      ctx.strokeStyle = "rgba(96,112,134,0.55)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      line(pumpX, bottom + 38, obs1, bottom + 38);
+      line(pumpX, bottom + 64, obs2, bottom + 64);
+      ctx.setLineDash([]);
+      arrow(pumpX + 70, aquiferTop + 40, obs1 - 54, aquiferTop + 40, colors.purple, 4);
+      text("水頭波往外傳", (pumpX + obs1) / 2, aquiferTop + 16, 16, colors.purple, "center", 900);
+
+      text("抽水", pumpX - 52, groundY + 128, 14, colors.orange, "center", 900);
+      text("注水", pumpX + 52, groundY + 128, 14, colors.blue, "center", 900);
+      ctx.restore();
+
+      return { x: right + 26, y: 92, w: 330, h: h - 230, r1, r2 };
+    }
+
+    function drawMiniGraph(panel, t) {
+      const x = panel.x;
+      const y = panel.y;
+      const w = panel.w;
+      const h = 318;
+      const plotTop = y + 150;
+      const mid = y + 210;
+
+      ctx.save();
+      roundRect(x, y, w, h, 8);
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.fill();
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      text("觀測井看到什麼？", x + 16, y + 26, 17, colors.ink, "left", 900);
+      text("同一個節奏，但越遠越小、越慢。", x + 16, y + 50, 13, colors.muted, "left", 700);
+
+      traces.push({ q: pumpSignal(t), a: waveAt(panel.r1, t), b: waveAt(panel.r2, t) });
+      while (traces.length > 150) traces.shift();
+
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+      line(x + 18, mid, x + w - 18, mid);
+
+      const series = [
+        ["q", colors.orange, "抽水井 Q(t)", 0],
+        ["a", colors.green, "觀測井 A", 1],
+        ["b", colors.purple, "觀測井 B", 2]
+      ];
+
+      series.forEach(([key, color, label, index]) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = key === "q" ? 2.8 : 2.2;
+        ctx.beginPath();
+        traces.forEach((p, i) => {
+          const px = x + 18 + (i / 149) * (w - 36);
+          const py = mid - p[key] * 42;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.fillRect(x + 20, y + 78 + index * 22, 20, 4);
+        text(label, x + 48, y + 80 + index * 22, 13, color, "left", 800);
+      });
+
+      ctx.strokeStyle = "#edf2f7";
+      ctx.lineWidth = 1;
+      line(x + 18, plotTop, x + w - 18, plotTop);
+
+      arrow(x + 184, y + 272, x + 248, y + 272, colors.green, 3);
+      text("波峰晚到", x + 276, y + 272, 13, colors.green, "center", 800);
+      ctx.restore();
+    }
+
+    function drawMeterPanel(panel, t) {
+      const x = panel.x;
+      const y = panel.y + 346;
+      const w = panel.w;
+      const h = 182;
+
+      ctx.save();
+      roundRect(x, y, w, h, 8);
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.fill();
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      text("解讀兩件事", x + 16, y + 26, 17, colors.ink, "left", 900);
+
+      const ampA = Math.exp(-1.9 * panel.r1 / Math.sqrt(Number(diff.value)));
+      const ampB = Math.exp(-1.9 * panel.r2 / Math.sqrt(Number(diff.value)));
+      const lagA = 3.6 * panel.r1 * Math.sqrt(Number(speed.value) / Number(diff.value));
+      const lagB = 3.6 * panel.r2 * Math.sqrt(Number(speed.value) / Number(diff.value));
+
+      drawBar(x + 18, y + 62, 126, "振幅", ampA, ampB, colors.green, colors.purple);
+      drawBar(x + 178, y + 62, 126, "相位差", lagA / 3.6, lagB / 3.6, colors.green, colors.purple);
+
+      text("A 井", x + 32, y + 150, 13, colors.green, "left", 800);
+      text("B 井", x + 98, y + 150, 13, colors.purple, "left", 800);
+      text("B 比 A 更遠，因此振幅較小、相位延遲較大。", x + 16, y + 170, 12, colors.muted, "left", 700);
+      ctx.restore();
+    }
+
+    function drawBar(x, y, w, label, v1, v2, c1, c2) {
+      text(label, x, y - 18, 14, colors.ink, "left", 800);
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 12;
+      line(x, y + 18, x + w, y + 18);
+      line(x, y + 52, x + w, y + 52);
+
+      ctx.strokeStyle = c1;
+      line(x, y + 18, x + Math.max(10, Math.min(w, v1 * w)), y + 18);
+      ctx.strokeStyle = c2;
+      line(x, y + 52, x + Math.max(10, Math.min(w, v2 * w)), y + 52);
+    }
+
+    function drawFrame(now) {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const t = (now - start) / 1000;
+
+      ctx.clearRect(0, 0, w, h);
+      const panel = drawAquiferScene(t, w, h);
+      drawMiniGraph(panel, t);
+      drawMeterPanel(panel, t);
+
+      if (running) requestAnimationFrame(drawFrame);
+    }
+
+    toggle.addEventListener("click", () => {
+      running = !running;
+      toggle.textContent = running ? "暫停" : "播放";
+      if (running) {
+        start += performance.now() - pausedAt;
+        requestAnimationFrame(drawFrame);
+      } else {
+        pausedAt = performance.now();
+      }
+    });
+
+    restart.addEventListener("click", () => {
+      traces.length = 0;
+      start = performance.now();
+      if (!running) {
+        running = true;
+        toggle.textContent = "暫停";
+        requestAnimationFrame(drawFrame);
+      }
+    });
+
+    [speed, diff, amp].forEach((input) => input.addEventListener("input", updateLabels));
+    window.addEventListener("resize", () => {
+      resize();
+      if (!running) drawFrame(pausedAt || performance.now());
+    });
+
+    updateLabels();
+    resize();
+    requestAnimationFrame(drawFrame);
+  </script>
+</body>
+</html>
