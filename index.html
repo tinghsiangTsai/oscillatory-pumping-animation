@@ -59,7 +59,7 @@
 
     main {
       display: grid;
-      grid-template-columns: minmax(980px, 1fr) 330px;
+      grid-template-columns: minmax(1120px, 1fr) 330px;
       gap: 16px;
       padding: 16px;
       align-items: start;
@@ -76,8 +76,8 @@
 
     .stage {
       position: relative;
-      height: clamp(620px, calc(100vh - 170px), 760px);
-      min-height: 620px;
+      height: clamp(760px, 54vw, 940px);
+      min-height: 760px;
     }
 
     canvas {
@@ -220,15 +220,15 @@
       line-height: 1.7;
     }
 
-    @media (max-width: 1360px) {
+    @media (max-width: 1760px) {
       main {
         grid-template-columns: 1fr;
       }
 
       .stage,
       canvas {
-        height: clamp(620px, 58vw, 760px);
-        min-height: 620px;
+        height: clamp(760px, 58vw, 980px);
+        min-height: 760px;
       }
 
       .side {
@@ -236,7 +236,7 @@
       }
     }
 
-    @media (min-width: 981px) and (max-width: 1360px) {
+    @media (min-width: 981px) and (max-width: 1760px) {
       .side {
         display: grid;
         grid-template-columns: minmax(280px, 360px) 1fr;
@@ -266,8 +266,8 @@
 
       .stage,
       canvas {
-        height: 620px;
-        min-height: 620px;
+        height: 720px;
+        min-height: 720px;
       }
     }
   </style>
