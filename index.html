@@ -329,9 +329,11 @@
           <div class="step"><span class="num">3</span><span>觀測井看到的波會比較小，這叫振幅衰減。</span></div>
           <div class="step"><span class="num">4</span><span>觀測井的波峰比較晚出現，這叫相位差或相位延遲。</span></div>
           <div class="formula">
-            抽水井：Q(t) = Q0 + A sin(omega t)<br>
-            觀測井：水位也跟著振盪<br>
-            重點量測：振幅變小多少、波峰晚到多少
+            抽水率：Q(t) = Qmax cos(ωt)<br>
+            水頭：h(r,t) = Re[Φ(r)e^{iωt}]<br>
+            二維：Φ(r) = Qmax/(2πT) χL K0(λL r)<br>
+            χL = (1+iωτq)/(1+iωτs)<br>
+            重點：A(r)=|Φ(r)|，ψ(r)=-arg[Φ(r)]
           </div>
         </div>
       </aside>
@@ -391,6 +393,15 @@
 
     function pumpSignal(t) {
       return Number(amp.value) * Math.sin(1.55 * Number(speed.value) * t);
+    }
+
+    function wellWaterY(top, value) {
+      return top + 120 - value * 52;
+    }
+
+    function headCurveY(r, groundY, t) {
+      const datumShift = 10 * Math.min(1, r * 8);
+      return groundY + 18 + 120 + datumShift - waveAt(r, t) * 52;
     }
 
     function text(str, x, y, size = 14, color = colors.ink, align = "left", weight = 700) {
@@ -473,7 +484,7 @@
 
     function drawWell(x, top, bottom, label, value, color, isPumping = false) {
       ctx.save();
-      const waterY = top + 120 - value * 52;
+      const waterY = wellWaterY(top, value);
       ctx.fillStyle = "#f8fafc";
       ctx.strokeStyle = "#2d3748";
       ctx.lineWidth = 4;
@@ -537,14 +548,13 @@
       text("含水層", 24, aquiferTop + 22, 16, "#684f28", "left", 900);
       text("(水頭波在這裡傳遞)", 24, aquiferTop + 46, 15, "#684f28", "left", 800);
 
-      const baseY = aquiferTop + 96;
       ctx.strokeStyle = "rgba(31, 127, 191, 0.28)";
       ctx.lineWidth = 6;
       ctx.beginPath();
       for (let i = 0; i <= 260; i += 1) {
         const r = i / 260;
         const x = pumpX + r * (right - pumpX);
-        const y = baseY - waveAt(r, t) * 42;
+        const y = headCurveY(r, groundY, t);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
@@ -556,7 +566,7 @@
       for (let i = 0; i <= 260; i += 1) {
         const r = i / 260;
         const x = pumpX + r * (right - pumpX);
-        const y = baseY - waveAt(r, t) * 42;
+        const y = headCurveY(r, groundY, t);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
@@ -565,6 +575,7 @@
       for (let i = 0; i < 6; i += 1) {
         const cycle = (t * Number(speed.value) * 0.18 + i / 6) % 1;
         const x = pumpX + cycle * (right - pumpX);
+        const baseY = headCurveY(cycle, groundY, t);
         const alpha = 1 - cycle;
         ctx.strokeStyle = `rgba(109, 69, 199, ${0.35 * alpha})`;
         ctx.lineWidth = 5;
