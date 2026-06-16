@@ -400,8 +400,7 @@
     }
 
     function headCurveY(r, groundY, t) {
-      const datumShift = 10 * Math.min(1, r * 8);
-      return groundY + 18 + 120 + datumShift - waveAt(r, t) * 52;
+      return groundY + 18 + 120 - waveAt(r, t) * 52;
     }
 
     function text(str, x, y, size = 14, color = colors.ink, align = "left", weight = 700) {
@@ -590,8 +589,8 @@
 
       const r1 = (obs1 - pumpX) / (right - pumpX);
       const r2 = (obs2 - pumpX) / (right - pumpX);
-      drawWell(obs1, groundY + 28, bottom, "觀測井 A", waveAt(r1, t), colors.green);
-      drawWell(obs2, groundY + 28, bottom, "觀測井 B", waveAt(r2, t), colors.purple);
+      drawWell(obs1, groundY + 18, bottom, "觀測井 A", waveAt(r1, t), colors.green);
+      drawWell(obs2, groundY + 18, bottom, "觀測井 B", waveAt(r2, t), colors.purple);
 
       ctx.strokeStyle = "rgba(96,112,134,0.55)";
       ctx.lineWidth = 2;
