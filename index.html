@@ -574,18 +574,6 @@
       }
       ctx.stroke();
 
-      for (let i = 0; i < 6; i += 1) {
-        const cycle = (t * Number(speed.value) * 0.18 + i / 6) % 1;
-        const x = pumpX + cycle * (right - pumpX);
-        const baseY = headCurveY(cycle, groundY, t);
-        const alpha = 1 - cycle;
-        ctx.strokeStyle = `rgba(109, 69, 199, ${0.35 * alpha})`;
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.ellipse(x, baseY, 25 + 18 * cycle, 70 + 30 * cycle, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
       const q = pumpSignal(t);
       drawPump(pumpX, groundY, t);
       drawWell(pumpX, groundY + 18, bottom, "抽水井", q, q >= 0 ? colors.orange : colors.blue, true);
