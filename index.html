@@ -589,8 +589,9 @@
       line(pumpX, bottom + 38, obs1, bottom + 38);
       line(pumpX, bottom + 64, obs2, bottom + 64);
       ctx.setLineDash([]);
-      arrow(pumpX + 70, aquiferTop + 40, obs1 - 54, aquiferTop + 40, colors.purple, 4);
-      text("水頭波往外傳", (pumpX + obs1) / 2, aquiferTop + 16, 16, colors.purple, "center", 900);
+      const waveLabelY = aquiferTop + 118;
+      arrow(pumpX + 70, waveLabelY, obs1 - 54, waveLabelY, colors.purple, 4);
+      text("水頭波往外傳", (pumpX + obs1) / 2, waveLabelY - 22, 16, colors.purple, "center", 900);
 
       text("抽水", pumpX - 52, groundY + 128, 14, colors.orange, "center", 900);
       text("注水", pumpX + 52, groundY + 128, 14, colors.blue, "center", 900);
