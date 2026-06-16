@@ -470,14 +470,17 @@
       ctx.fill();
       ctx.globalAlpha = 1;
 
+      const arrowX = x;
+      const arrowTop = groundY - 182;
+      const arrowBottom = groundY - 128;
       if (q >= 0) {
-        arrow(x - 86, groundY + 78, x - 86, groundY - 34, color, 5);
+        arrow(arrowX, arrowBottom, arrowX, arrowTop, color, 5);
       } else {
-        arrow(x - 86, groundY - 34, x - 86, groundY + 78, color, 5);
+        arrow(arrowX, arrowTop, arrowX, arrowBottom, color, 5);
       }
 
-      text(mode, x - 116, groundY + 20, 21, color, "center", 900);
-      text(q >= 0 ? "地下水被拉向井內" : "水被推回含水層", x - 116, groundY + 48, 13, color, "center", 700);
+      text(mode, x + 38, groundY - 162, 21, color, "left", 900);
+      text(q >= 0 ? "地下水被拉向井內" : "水被推回含水層", x + 38, groundY - 136, 13, color, "left", 700);
       ctx.restore();
     }
 
